@@ -1,0 +1,55 @@
+# docker compose up --build
+#   → api + web, connected to the Azure resources configured in .env (Azure Database for PostgreSQL, Blob, ...).
+# docker compose --profile local up --build
+#   → also starts a local PostgreSQL (offline development without Azure; see .env.example).
+services:
+  api:
+    build:
+      context: .
+      dockerfile: src/Meridian.Api/Dockerfile
+    env_file: .env
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+    ports:
+      - "8080:8080"
+    volumes:
+      - uploads:/app/data/uploads   # only used when Storage__Provider=Local
+      - azure-auth:/root/.IdentityService   # remembers the device-code sign-in across restarts
+    depends_on:
+      postgres:
+        condition: service_healthy
+        required: false            # only exists with --profile local
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/localhost/8080 && echo -e \"GET /health HTTP/1.0\\r\\n\\r\\n\" >&3 && grep -q ok <&3'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  web:
+    build: ./web
+    ports:
+      - "4200:80"
+    depends_on:
+      - api
+
+  postgres:
+    profiles: ["local"]
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: meridian
+      POSTGRES_USER: meridian
+      POSTGRES_PASSWORD: ${LOCAL_POSTGRES_PASSWORD:-meridian-local}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U meridian -d meridian"]
+      interval: 5s
+      retries: 20
+
+volumes:
+  azure-auth:
+  pgdata:
+  uploads:

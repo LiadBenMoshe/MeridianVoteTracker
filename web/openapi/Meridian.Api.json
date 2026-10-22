@@ -1,0 +1,3145 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Meridian Vote Tracker API",
+    "version": "v1"
+  },
+  "paths": {
+    "/api/conflicts": {
+      "get": {
+        "tags": [
+          "Conflicts"
+        ],
+        "summary": "Conflicts, pending by default, filterable by vote (CON-01). Resolved ones stay visible (CON-06).",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/ConflictStatus"
+                }
+              ]
+            }
+          },
+          {
+            "name": "voteId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "resolved",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConflictDtoPagedResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/conflicts/{id}": {
+      "get": {
+        "tags": [
+          "Conflicts"
+        ],
+        "summary": "Approved vs incoming value side by side, with the source of each (CON-02).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConflictDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/conflicts/{id}/decision": {
+      "post": {
+        "tags": [
+          "Conflicts"
+        ],
+        "summary": "Accept (incoming becomes approved) or reject (approved is kept) (CON-04).\r\n409 when someone else already decided; the body's \"current\" holds the latest state (CON-05).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/DecisionRequest"
+                  }
+                ]
+              }
+            },
+            "text/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/DecisionRequest"
+                  }
+                ]
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/DecisionRequest"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConflictDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/extractions": {
+      "post": {
+        "tags": [
+          "Extractions"
+        ],
+        "summary": "Upload a scanned PDF. Extraction runs in the background (PDF-01).",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "required": [
+                  "File"
+                ],
+                "type": "object",
+                "properties": {
+                  "File": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "File": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtractionDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Extractions"
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/ExtractionStatus"
+                }
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExtractionDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/extractions/{id}": {
+      "get": {
+        "tags": [
+          "Extractions"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtractionDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Extractions"
+        ],
+        "summary": "Save the analyst's edits. Values are re-checked against the domain rules (PDF-03/04).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateExtractionRequest"
+                  }
+                ]
+              }
+            },
+            "text/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateExtractionRequest"
+                  }
+                ]
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateExtractionRequest"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtractionDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/extractions/{id}/file": {
+      "get": {
+        "tags": [
+          "Extractions"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/extractions/{id}/approve": {
+      "post": {
+        "tags": [
+          "Extractions"
+        ],
+        "summary": "Approve: becomes a normal import, classified exactly like CSV rows: new, unchanged or conflict (PDF-05).\r\nBlocked while issues remain.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/ReviewExtractionRequest"
+                  }
+                ]
+              }
+            },
+            "text/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/ReviewExtractionRequest"
+                  }
+                ]
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/ReviewExtractionRequest"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtractionDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/extractions/{id}/reject": {
+      "post": {
+        "tags": [
+          "Extractions"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/ReviewExtractionRequest"
+                  }
+                ]
+              }
+            },
+            "text/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/ReviewExtractionRequest"
+                  }
+                ]
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/ReviewExtractionRequest"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtractionDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/extractions/{id}/retry": {
+      "post": {
+        "tags": [
+          "Extractions"
+        ],
+        "summary": "Retry a failed extraction (PDF-06).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtractionDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/imports": {
+      "post": {
+        "tags": [
+          "Imports"
+        ],
+        "summary": "Upload an Assembly CSV export. Returns immediately (202); processing runs in the background (ING-01).",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "required": [
+                  "File"
+                ],
+                "type": "object",
+                "properties": {
+                  "File": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "File": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Imports"
+        ],
+        "summary": "History of all imports (HIS-01).",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportDtoPagedResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/imports/{id}": {
+      "get": {
+        "tags": [
+          "Imports"
+        ],
+        "summary": "Status and live progress of one import (ING-02). Poll this; it survives a page refresh.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/imports/{id}/report": {
+      "get": {
+        "tags": [
+          "Imports"
+        ],
+        "summary": "The saved import report (ING-14, ING-15).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportReportDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/imports/{id}/rows": {
+      "get": {
+        "tags": [
+          "Imports"
+        ],
+        "summary": "What happened to every row of the file (HIS-01). Filter by outcome / vote.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "outcome",
+            "in": "query",
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/RowOutcome"
+                }
+              ]
+            }
+          },
+          {
+            "name": "voteId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportRowDtoPagedResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/imports/{id}/file": {
+      "get": {
+        "tags": [
+          "Imports"
+        ],
+        "summary": "Download the original uploaded file.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/review/summary": {
+      "get": {
+        "tags": [
+          "Review"
+        ],
+        "summary": "Counts for the Review inbox badge.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewSummaryDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/snapshots/preview": {
+      "post": {
+        "tags": [
+          "Snapshots"
+        ],
+        "summary": "How many votes a selection matches, and which have no position (shown before creating).",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/SnapshotSelection"
+                  }
+                ]
+              }
+            },
+            "text/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/SnapshotSelection"
+                  }
+                ]
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/SnapshotSelection"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SnapshotPreviewDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/snapshots": {
+      "post": {
+        "tags": [
+          "Snapshots"
+        ],
+        "summary": "Create a snapshot. Returns 202; the calculation runs in the background (SNP-02). 422 if a vote has no position (POS-04).",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateSnapshotRequest"
+                  }
+                ]
+              }
+            },
+            "text/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateSnapshotRequest"
+                  }
+                ]
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateSnapshotRequest"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SnapshotDto"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Snapshots"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SnapshotDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/snapshots/{id}": {
+      "get": {
+        "tags": [
+          "Snapshots"
+        ],
+        "summary": "Score and rank per country (SNP-03). Read from frozen tables, so it never changes (SNP-04).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SnapshotRankingDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/snapshots/{id}/countries/{code}": {
+      "get": {
+        "tags": [
+          "Snapshots"
+        ],
+        "summary": "Per-country breakdown: the contribution of every vote, with the rules applied (SNP-03).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CountryBreakdownDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/snapshots/{id}/publish": {
+      "post": {
+        "tags": [
+          "Snapshots"
+        ],
+        "summary": "Admin only: mark as the published snapshot of a quarter (SNP-05).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/PublishRequest"
+                  }
+                ]
+              }
+            },
+            "text/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/PublishRequest"
+                  }
+                ]
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/PublishRequest"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SnapshotDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Predefined users for the user switcher.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/me": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/votes": {
+      "get": {
+        "tags": [
+          "Votes"
+        ],
+        "summary": "Votes with position, weight and open conflicts. Votes without a position are counted separately (POS-04).",
+        "parameters": [
+          {
+            "name": "session",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "withoutPosition",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoteListDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/votes/sessions": {
+      "get": {
+        "tags": [
+          "Votes"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "format": "int32"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/votes/detail": {
+      "get": {
+        "tags": [
+          "Votes"
+        ],
+        "summary": "One vote: details, position, country votes (with a marker when changed by a decision).\r\n            Vote ids contain '/', so all per-vote endpoints take the id as a query parameter.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoteDetailDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/votes/timeline": {
+      "get": {
+        "tags": [
+          "Votes"
+        ],
+        "summary": "Everything that happened to a vote, newest first (HIS-04).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TimelineEventDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/votes/position": {
+      "put": {
+        "tags": [
+          "Votes"
+        ],
+        "summary": "Admin only (POS-01). Validation errors come back per field, e.g. weight 7 (POS-02).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/SetPositionRequest"
+                  }
+                ]
+              }
+            },
+            "text/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/SetPositionRequest"
+                  }
+                ]
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/SetPositionRequest"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/votes/positions/bulk": {
+      "post": {
+        "tags": [
+          "Votes"
+        ],
+        "summary": "Admin only: apply one position/weight to all votes matching a filter.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/BulkPositionRequest"
+                  }
+                ]
+              }
+            },
+            "text/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/BulkPositionRequest"
+                  }
+                ]
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/BulkPositionRequest"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkPositionResultDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "BulkPositionRequest": {
+        "required": [
+          "position",
+          "weight"
+        ],
+        "type": "object",
+        "properties": {
+          "session": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "from": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "to": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "onlyWithoutPosition": {
+            "type": "boolean"
+          },
+          "position": {
+            "minLength": 1,
+            "pattern": "^[YN]$",
+            "type": "string"
+          },
+          "weight": {
+            "maximum": 5,
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "BulkPositionResultDto": {
+        "required": [
+          "updated"
+        ],
+        "type": "object",
+        "properties": {
+          "updated": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ConflictDto": {
+        "required": [
+          "approvedSource",
+          "approvedValue",
+          "comment",
+          "countryCode",
+          "countryName",
+          "createdAt",
+          "currentApprovedValue",
+          "decidedAt",
+          "decidedBy",
+          "field",
+          "id",
+          "impact",
+          "incomingSource",
+          "incomingValue",
+          "kind",
+          "session",
+          "status",
+          "valueBeforeDecision",
+          "voteDate",
+          "voteId",
+          "voteTitle"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConflictKind"
+              }
+            ]
+          },
+          "voteId": {
+            "type": "string"
+          },
+          "voteTitle": {
+            "type": "string"
+          },
+          "voteDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "session": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "countryCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "countryName": {
+            "type": "string",
+            "nullable": true
+          },
+          "field": {
+            "type": "string"
+          },
+          "approvedValue": {
+            "type": "string"
+          },
+          "incomingValue": {
+            "type": "string"
+          },
+          "currentApprovedValue": {
+            "type": "string"
+          },
+          "approvedSource": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SourceDto"
+              }
+            ],
+            "nullable": true
+          },
+          "incomingSource": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SourceDto"
+              }
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConflictStatus"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "decidedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "decidedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "comment": {
+            "type": "string",
+            "nullable": true
+          },
+          "valueBeforeDecision": {
+            "type": "string",
+            "nullable": true
+          },
+          "impact": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "ConflictDtoPagedResult": {
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "total"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConflictDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ConflictKind": {
+        "enum": [
+          "CountryVote",
+          "VoteDetail"
+        ],
+        "type": "string"
+      },
+      "ConflictStatus": {
+        "enum": [
+          "Pending",
+          "Accepted",
+          "Rejected"
+        ],
+        "type": "string"
+      },
+      "ContributionDto": {
+        "required": [
+          "ballot",
+          "counted",
+          "currentBallot",
+          "date",
+          "matched",
+          "note",
+          "position",
+          "title",
+          "voteId",
+          "weight"
+        ],
+        "type": "object",
+        "properties": {
+          "voteId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "position": {
+            "type": "string"
+          },
+          "weight": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "ballot": {
+            "type": "string",
+            "nullable": true
+          },
+          "counted": {
+            "type": "boolean"
+          },
+          "matched": {
+            "type": "boolean"
+          },
+          "note": {
+            "type": "string"
+          },
+          "currentBallot": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CountryBreakdownDto": {
+        "required": [
+          "changedSinceSnapshot",
+          "contributions",
+          "rankedCount",
+          "rules",
+          "score"
+        ],
+        "type": "object",
+        "properties": {
+          "score": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SnapshotScoreDto"
+              }
+            ]
+          },
+          "rankedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "contributions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContributionDto"
+            }
+          },
+          "changedSinceSnapshot": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CountryVoteDto": {
+        "required": [
+          "approvedAt",
+          "approvedBy",
+          "ballot",
+          "changedByDecision",
+          "code",
+          "name",
+          "sourceFile",
+          "sourceImportId"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "ballot": {
+            "type": "string"
+          },
+          "changedByDecision": {
+            "type": "boolean"
+          },
+          "approvedBy": {
+            "type": "string"
+          },
+          "approvedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "sourceImportId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "sourceFile": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateSnapshotRequest": {
+        "required": [
+          "name",
+          "selection"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "selection": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SnapshotSelection"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "Decision": {
+        "enum": [
+          "Accept",
+          "Reject"
+        ],
+        "type": "string"
+      },
+      "DecisionRequest": {
+        "required": [
+          "decision"
+        ],
+        "type": "object",
+        "properties": {
+          "decision": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Decision"
+              }
+            ]
+          },
+          "comment": {
+            "maxLength": 2000,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ExtractedRow": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "ballot": {
+            "type": "string",
+            "nullable": true
+          },
+          "confidence": {
+            "type": "number",
+            "format": "double"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "ExtractedSheet": {
+        "type": "object",
+        "properties": {
+          "voteId": {
+            "type": "string",
+            "nullable": true
+          },
+          "session": {
+            "type": "string",
+            "nullable": true
+          },
+          "date": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExtractedRow"
+            }
+          },
+          "totals": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PrintedTotals"
+              }
+            ],
+            "nullable": true
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "parseIssues": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "pages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ExtractionDto": {
+        "required": [
+          "aiConfigured",
+          "attempts",
+          "createdAt",
+          "error",
+          "fileName",
+          "id",
+          "importId",
+          "issueCount",
+          "nextAttemptAt",
+          "reviewComment",
+          "reviewedAt",
+          "reviewedBy",
+          "sheet",
+          "status",
+          "uploadedBy",
+          "version"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "uploadedBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExtractionStatus"
+              }
+            ]
+          },
+          "attempts": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nextAttemptAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "error": {
+            "type": "string",
+            "nullable": true
+          },
+          "issueCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sheet": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExtractedSheet"
+              }
+            ],
+            "nullable": true
+          },
+          "reviewedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "reviewedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "reviewComment": {
+            "type": "string",
+            "nullable": true
+          },
+          "importId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "aiConfigured": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ExtractionStatus": {
+        "enum": [
+          "Queued",
+          "Running",
+          "NeedsReview",
+          "Approved",
+          "Rejected",
+          "Failed"
+        ],
+        "type": "string"
+      },
+      "ImportCountsDto": {
+        "required": [
+          "conflict",
+          "conflictsCreated",
+          "contradiction",
+          "duplicate",
+          "invalid",
+          "new",
+          "unchanged"
+        ],
+        "type": "object",
+        "properties": {
+          "new": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "unchanged": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "duplicate": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "invalid": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "contradiction": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "conflict": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "conflictsCreated": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportDto": {
+        "required": [
+          "counts",
+          "error",
+          "extractionId",
+          "fileName",
+          "finishedAt",
+          "id",
+          "percent",
+          "phase",
+          "processedRows",
+          "publishedAt",
+          "sameContentAsImportId",
+          "source",
+          "startedAt",
+          "status",
+          "totalRows",
+          "uploadedAt",
+          "uploadedBy",
+          "votesInFile"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "source": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImportSource"
+              }
+            ]
+          },
+          "extractionId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "uploadedBy": {
+            "type": "string"
+          },
+          "uploadedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImportStatus"
+              }
+            ]
+          },
+          "phase": {
+            "type": "string",
+            "nullable": true
+          },
+          "totalRows": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "processedRows": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "percent": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "finishedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "publishedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "error": {
+            "type": "string",
+            "nullable": true
+          },
+          "votesInFile": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "counts": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImportCountsDto"
+              }
+            ]
+          },
+          "sameContentAsImportId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportDtoPagedResult": {
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "total"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportReportDto": {
+        "required": [
+          "import",
+          "normalization",
+          "problemRows",
+          "problemRowsTotal",
+          "votes"
+        ],
+        "type": "object",
+        "properties": {
+          "import": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ImportDto"
+              }
+            ]
+          },
+          "votes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportVoteDto"
+            }
+          },
+          "problemRows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportRowDto"
+            }
+          },
+          "problemRowsTotal": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "normalization": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NormalizationDto"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportRowDto": {
+        "required": [
+          "ballot",
+          "countryCode",
+          "outcome",
+          "raw",
+          "reason",
+          "rowNo",
+          "voteId"
+        ],
+        "type": "object",
+        "properties": {
+          "rowNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "voteId": {
+            "type": "string",
+            "nullable": true
+          },
+          "countryCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "ballot": {
+            "type": "string",
+            "nullable": true
+          },
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RowOutcome"
+              }
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
+          },
+          "raw": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportRowDtoPagedResult": {
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "total"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportRowDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportSource": {
+        "enum": [
+          "Csv",
+          "PdfExtraction",
+          "Seed"
+        ],
+        "type": "string"
+      },
+      "ImportStatus": {
+        "enum": [
+          "Queued",
+          "Processing",
+          "Completed",
+          "CompletedWithIssues",
+          "Failed"
+        ],
+        "type": "string"
+      },
+      "ImportVoteDto": {
+        "required": [
+          "details",
+          "outcome",
+          "title",
+          "voteId"
+        ],
+        "type": "object",
+        "properties": {
+          "voteId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "outcome": {
+            "type": "string"
+          },
+          "details": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "JobStatus": {
+        "enum": [
+          "Queued",
+          "Running",
+          "Completed",
+          "Failed"
+        ],
+        "type": "string"
+      },
+      "NormalizationAppliedDto": {
+        "required": [
+          "count",
+          "examples",
+          "rule"
+        ],
+        "type": "object",
+        "properties": {
+          "rule": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "examples": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NormalizationExampleDto"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "NormalizationDto": {
+        "required": [
+          "applied",
+          "rules"
+        ],
+        "type": "object",
+        "properties": {
+          "rules": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "applied": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NormalizationAppliedDto"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "NormalizationExampleDto": {
+        "required": [
+          "field",
+          "normalized",
+          "original",
+          "row"
+        ],
+        "type": "object",
+        "properties": {
+          "row": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "field": {
+            "type": "string"
+          },
+          "original": {
+            "type": "string"
+          },
+          "normalized": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PrintedTotals": {
+        "type": "object",
+        "properties": {
+          "yes": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "no": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "abstain": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "notVoting": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          },
+          "instance": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": { }
+      },
+      "PublishRequest": {
+        "required": [
+          "quarter"
+        ],
+        "type": "object",
+        "properties": {
+          "quarter": {
+            "minLength": 1,
+            "pattern": "^\\d{4}-Q[1-4]$",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReviewExtractionRequest": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "comment": {
+            "maxLength": 2000,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReviewSummaryDto": {
+        "required": [
+          "extractionsRunning",
+          "extractionsToReview",
+          "pendingConflicts"
+        ],
+        "type": "object",
+        "properties": {
+          "pendingConflicts": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "extractionsToReview": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "extractionsRunning": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RowOutcome": {
+        "enum": [
+          "New",
+          "Unchanged",
+          "Duplicate",
+          "Invalid",
+          "Contradiction",
+          "Conflict"
+        ],
+        "type": "string"
+      },
+      "SetPositionRequest": {
+        "required": [
+          "position",
+          "weight"
+        ],
+        "type": "object",
+        "properties": {
+          "position": {
+            "minLength": 1,
+            "pattern": "^[YN]$",
+            "type": "string",
+            "description": "\"Y\" (institute wants YES) or \"N\" (institute wants NO)."
+          },
+          "weight": {
+            "maximum": 5,
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SnapshotDto": {
+        "required": [
+          "computedAt",
+          "createdAt",
+          "createdBy",
+          "error",
+          "id",
+          "name",
+          "phase",
+          "progress",
+          "publishedAt",
+          "publishedBy",
+          "publishedQuarter",
+          "rules",
+          "rulesVersion",
+          "selectionDescription",
+          "status",
+          "suggestedQuarter",
+          "voteCount"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/JobStatus"
+              }
+            ]
+          },
+          "progress": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "phase": {
+            "type": "string",
+            "nullable": true
+          },
+          "voteCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "computedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "error": {
+            "type": "string",
+            "nullable": true
+          },
+          "publishedQuarter": {
+            "type": "string",
+            "nullable": true
+          },
+          "publishedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "publishedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "selectionDescription": {
+            "type": "string"
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "rulesVersion": {
+            "type": "string"
+          },
+          "suggestedQuarter": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SnapshotPreviewDto": {
+        "required": [
+          "missingPosition",
+          "missingPositionTotal",
+          "unknownVoteIds",
+          "voteCount"
+        ],
+        "type": "object",
+        "properties": {
+          "voteCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "missingPositionTotal": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "missingPosition": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VoteListItemDto"
+            }
+          },
+          "unknownVoteIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "SnapshotRankingDto": {
+        "required": [
+          "rankedCount",
+          "scores",
+          "snapshot"
+        ],
+        "type": "object",
+        "properties": {
+          "snapshot": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SnapshotDto"
+              }
+            ]
+          },
+          "rankedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "scores": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SnapshotScoreDto"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "SnapshotScoreDto": {
+        "required": [
+          "code",
+          "countedVotes",
+          "countedWeight",
+          "matchedWeight",
+          "name",
+          "rank",
+          "score"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "score": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "rank": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "matchedWeight": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "countedWeight": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "countedVotes": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SnapshotSelection": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "to": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "session": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "voteIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Explicit votes; added to the votes matched by the filter.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SourceDto": {
+        "required": [
+          "approvedAt",
+          "approvedBy",
+          "fileName",
+          "importId",
+          "publishedAt",
+          "uploadedAt",
+          "uploadedBy"
+        ],
+        "type": "object",
+        "properties": {
+          "importId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "fileName": {
+            "type": "string",
+            "nullable": true
+          },
+          "uploadedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "uploadedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "publishedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "approvedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "approvedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "TalliesDto": {
+        "required": [
+          "absent",
+          "abstain",
+          "no",
+          "yes"
+        ],
+        "type": "object",
+        "properties": {
+          "yes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "no": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "abstain": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "absent": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "TimelineEventDto": {
+        "required": [
+          "actor",
+          "at",
+          "conflictId",
+          "countryCode",
+          "field",
+          "id",
+          "importFile",
+          "importId",
+          "message",
+          "newValue",
+          "oldValue",
+          "snapshotId",
+          "type"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "actor": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "countryCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "field": {
+            "type": "string",
+            "nullable": true
+          },
+          "oldValue": {
+            "type": "string",
+            "nullable": true
+          },
+          "newValue": {
+            "type": "string",
+            "nullable": true
+          },
+          "importId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "importFile": {
+            "type": "string",
+            "nullable": true
+          },
+          "conflictId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "snapshotId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateExtractionRequest": {
+        "required": [
+          "sheet"
+        ],
+        "type": "object",
+        "properties": {
+          "sheet": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExtractedSheet"
+              }
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "UserDto": {
+        "required": [
+          "id",
+          "name",
+          "role"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ValidationProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          },
+          "instance": {
+            "type": "string",
+            "nullable": true
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "additionalProperties": { }
+      },
+      "VoteDetailDto": {
+        "required": [
+          "countryVotes",
+          "date",
+          "detailsSource",
+          "id",
+          "pendingConflicts",
+          "position",
+          "positionUpdatedAt",
+          "positionUpdatedBy",
+          "session",
+          "tallies",
+          "title",
+          "weight"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "session": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "title": {
+            "type": "string"
+          },
+          "position": {
+            "type": "string",
+            "nullable": true
+          },
+          "weight": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "positionUpdatedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "positionUpdatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "tallies": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TalliesDto"
+              }
+            ]
+          },
+          "pendingConflicts": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "detailsSource": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SourceDto"
+              }
+            ],
+            "nullable": true
+          },
+          "countryVotes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CountryVoteDto"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "VoteListDto": {
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "total",
+          "withoutPositionTotal"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VoteListItemDto"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "withoutPositionTotal": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "VoteListItemDto": {
+        "required": [
+          "countryVotes",
+          "date",
+          "id",
+          "pendingConflicts",
+          "position",
+          "session",
+          "title",
+          "weight"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "session": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "title": {
+            "type": "string"
+          },
+          "countryVotes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "position": {
+            "type": "string",
+            "nullable": true
+          },
+          "weight": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "pendingConflicts": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "securitySchemes": {
+      "XUser": {
+        "type": "apiKey",
+        "description": "Simplified login: dana, omar (analysts) or lena (admin).",
+        "name": "X-User",
+        "in": "header"
+      }
+    }
+  },
+  "security": [
+    {
+      "XUser": [ ]
+    }
+  ]
+}
